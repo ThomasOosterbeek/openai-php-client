@@ -167,6 +167,13 @@ test('streamed output_item events hydrate nested vendor items via the registry',
         ->and($response->response->item)->toBeInstanceOf(AcmeSearchResult::class);
 });
 
+test('CreateStreamedResponse throws on non-string event types instead of a TypeError', function () {
+    CreateStreamedResponse::from([
+        'type' => 123,
+        '__meta' => meta(),
+    ], acmeRegistry());
+})->throws(UnknownEventException::class);
+
 test('streamed output_item events throw on unknown nested item types', function () {
     CreateStreamedResponse::from([
         'type' => 'response.output_item.added',
