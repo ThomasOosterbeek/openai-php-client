@@ -90,7 +90,7 @@ final class ItemObjects
                 'program_output' => OutputProgramOutput::from($item),
                 'apply_patch_call' => OutputApplyPatchToolCall::from($item),
                 'apply_patch_call_output' => ApplyPatchToolCallOutput::from($item),
-                // @phpstan-ignore match.unreachable (the documented item shapes are exhaustive, but vendor payloads at runtime are not statically guaranteed to match them)
+                // @phpstan-ignore match.unreachable
                 default => ExtensionItems::resolve($item, $registry),
             },
             $outputItems,

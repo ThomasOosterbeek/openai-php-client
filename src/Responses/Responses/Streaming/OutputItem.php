@@ -98,7 +98,7 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
             'tool_search_call' => OutputToolSearchCall::from($attributes['item']),
             'tool_search_output' => OutputToolSearchOutput::from($attributes['item']),
             'apply_patch_call' => OutputApplyPatchToolCall::from($attributes['item']),
-            // @phpstan-ignore match.unreachable (the documented item shapes are exhaustive, but vendor payloads at runtime are not statically guaranteed to match them)
+            // @phpstan-ignore match.unreachable
             default => ExtensionItems::resolve($attributes['item'], $registry),
         };
 
@@ -116,6 +116,7 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
      */
     public function toArray(): array
     {
+        // https://github.com/phpstan/phpstan/issues/8438
         // @phpstan-ignore-next-line
         return [
             'type' => $this->type,

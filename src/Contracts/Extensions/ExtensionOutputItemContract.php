@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace OpenAI\Contracts\Extensions;
 
-/**
- * A typed vendor item appearing in Responses output or input item lists.
- */
 interface ExtensionOutputItemContract
 {
     /**

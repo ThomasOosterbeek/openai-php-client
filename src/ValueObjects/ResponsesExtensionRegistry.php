@@ -10,7 +10,7 @@ use OpenAI\Contracts\Extensions\ResponsesExtensionContract;
 use OpenAI\Exceptions\InvalidResponsesExtension;
 
 /**
- * Immutable map of OpenResponses vendor types to their typed classes.
+ * @internal
  */
 final class ResponsesExtensionRegistry
 {
