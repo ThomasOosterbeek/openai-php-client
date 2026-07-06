@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace OpenAI\Resources;
 
 use OpenAI\Contracts\Resources\ResponsesContract;
+use OpenAI\Contracts\TransporterContract;
 use OpenAI\Responses\Responses\CreateResponse;
 use OpenAI\Responses\Responses\CreateStreamedResponse;
 use OpenAI\Responses\Responses\DeleteResponse;
 use OpenAI\Responses\Responses\ListInputItems;
 use OpenAI\Responses\Responses\RetrieveResponse;
 use OpenAI\Responses\StreamResponse;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 use OpenAI\ValueObjects\Transporter\Payload;
 use OpenAI\ValueObjects\Transporter\Response;
 
@@ -22,7 +24,13 @@ use OpenAI\ValueObjects\Transporter\Response;
 final class Responses implements ResponsesContract
 {
     use Concerns\Streamable;
-    use Concerns\Transportable;
+
+    public function __construct(
+        private readonly TransporterContract $transporter,
+        private readonly ?ResponsesExtensionRegistry $extensions = null,
+    ) {
+        // ..
+    }
 
     /**
      * Creates a model response. Provide text or image inputs to generate text or JSON outputs.
@@ -42,7 +50,7 @@ final class Responses implements ResponsesContract
         /** @var Response<CreateResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return CreateResponse::from($response->data(), $response->meta());
+        return CreateResponse::from($response->data(), $response->meta(), $this->extensions);
     }
 
     /**
@@ -62,7 +70,7 @@ final class Responses implements ResponsesContract
 
         $response = $this->transporter->requestStream($payload);
 
-        return new StreamResponse(CreateStreamedResponse::class, $response);
+        return new StreamResponse(CreateStreamedResponse::class, $response, $this->extensions);
     }
 
     /**
@@ -77,7 +85,7 @@ final class Responses implements ResponsesContract
         /** @var Response<RetrieveResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return RetrieveResponse::from($response->data(), $response->meta());
+        return RetrieveResponse::from($response->data(), $response->meta(), $this->extensions);
     }
 
     /**
@@ -97,7 +105,7 @@ final class Responses implements ResponsesContract
 
         $response = $this->transporter->requestStream($payload);
 
-        return new StreamResponse(CreateStreamedResponse::class, $response);
+        return new StreamResponse(CreateStreamedResponse::class, $response, $this->extensions);
     }
 
     /**
@@ -112,7 +120,7 @@ final class Responses implements ResponsesContract
         /** @var Response<RetrieveResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return RetrieveResponse::from($response->data(), $response->meta());
+        return RetrieveResponse::from($response->data(), $response->meta(), $this->extensions);
     }
 
     /**
@@ -144,7 +152,7 @@ final class Responses implements ResponsesContract
         /** @var Response<ListInputItemsType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return ListInputItems::from($response->data(), $response->meta());
+        return ListInputItems::from($response->data(), $response->meta(), $this->extensions);
     }
 
     /**
