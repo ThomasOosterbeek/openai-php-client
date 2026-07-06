@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace OpenAI\Contracts\Extensions;
 
-/**
- * A typed vendor event emitted while streaming a Response.
- */
 interface ExtensionStreamEventContract
 {
     /**

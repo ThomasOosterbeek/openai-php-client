@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace OpenAI\Contracts\Extensions;
 
 /**
- * Describes an OpenResponses vendor extension.
- *
  * @see https://www.openresponses.org/specification
  */
 interface ResponsesExtensionContract

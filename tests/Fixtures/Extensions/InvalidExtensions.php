@@ -51,7 +51,7 @@ final class WrongClassExtension implements ResponsesExtensionContract
 
     public static function outputItems(): array
     {
-        // @phpstan-ignore-next-line intentionally wrong for validation tests
+        // @phpstan-ignore-next-line
         return ['acme:search_result' => \stdClass::class];
     }
 

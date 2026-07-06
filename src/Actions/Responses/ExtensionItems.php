@@ -11,8 +11,6 @@ use UnexpectedValueException;
 final class ExtensionItems
 {
     /**
-     * Resolves a vendor-typed item through the extension registry.
-     *
      * @param  array<string, mixed>  $item
      */
     public static function resolve(array $item, ?ResponsesExtensionRegistry $registry): ExtensionOutputItemContract
