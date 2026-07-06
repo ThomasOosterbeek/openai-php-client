@@ -2,13 +2,17 @@
 
 use OpenAI\Actions\Responses\ItemObjects;
 use OpenAI\Actions\Responses\OutputObjects;
+use OpenAI\Exceptions\UnknownEventException;
 use OpenAI\Responses\Responses\CreateResponse;
+use OpenAI\Responses\Responses\CreateStreamedResponse;
 use OpenAI\Responses\Responses\ListInputItems;
 use OpenAI\Responses\Responses\Output\OutputReasoning;
 use OpenAI\Responses\Responses\RetrieveResponse;
+use OpenAI\Responses\Responses\Streaming\OutputItem;
 use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 use Tests\Fixtures\Extensions\AcmeExtension;
 use Tests\Fixtures\Extensions\AcmeSearchResult;
+use Tests\Fixtures\Extensions\AcmeTraceEvent;
 
 function acmeRegistry(): ResponsesExtensionRegistry
 {
@@ -114,3 +118,61 @@ test('ListInputItems hydrates vendor items via the registry', function () {
     expect($vendorItem)->toBeInstanceOf(AcmeSearchResult::class)
         ->and($response->toArray()['data'])->toContain(acmeSearchResultItem());
 });
+
+function acmeTraceEventPayload(): array
+{
+    return [
+        'type' => 'acme:trace_event',
+        'trace_id' => 'tr_123',
+        'spans' => 3,
+        '__meta' => meta(),
+    ];
+}
+
+test('CreateStreamedResponse routes registered vendor events to the extension class', function () {
+    $response = CreateStreamedResponse::from(acmeTraceEventPayload(), acmeRegistry());
+
+    expect($response->event)->toBe('acme:trace_event')
+        ->and($response->response)->toBeInstanceOf(AcmeTraceEvent::class)
+        ->and($response->response->traceId)->toBe('tr_123')
+        ->and($response->response->spans)->toBe(3)
+        ->and($response->toArray()['data'])->toBe([
+            'type' => 'acme:trace_event',
+            'trace_id' => 'tr_123',
+            'spans' => 3,
+        ]);
+});
+
+test('CreateStreamedResponse throws on vendor events without a registered extension', function () {
+    CreateStreamedResponse::from([
+        'type' => 'other:thing',
+        '__meta' => meta(),
+    ], acmeRegistry());
+})->throws(UnknownEventException::class, 'Unknown Responses streaming event: other:thing');
+
+test('CreateStreamedResponse without a registry keeps throwing on vendor events', function () {
+    CreateStreamedResponse::from(acmeTraceEventPayload());
+})->throws(UnknownEventException::class);
+
+test('streamed output_item events hydrate nested vendor items via the registry', function () {
+    $response = CreateStreamedResponse::from([
+        'type' => 'response.output_item.added',
+        'output_index' => 0,
+        'sequence_number' => 2,
+        'item' => acmeSearchResultItem(),
+        '__meta' => meta(),
+    ], acmeRegistry());
+
+    expect($response->response)->toBeInstanceOf(OutputItem::class)
+        ->and($response->response->item)->toBeInstanceOf(AcmeSearchResult::class);
+});
+
+test('streamed output_item events throw on unknown nested item types', function () {
+    CreateStreamedResponse::from([
+        'type' => 'response.output_item.added',
+        'output_index' => 0,
+        'sequence_number' => 2,
+        'item' => ['type' => 'other:thing'],
+        '__meta' => meta(),
+    ], acmeRegistry());
+})->throws(UnexpectedValueException::class);

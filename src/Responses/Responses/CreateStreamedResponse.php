@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OpenAI\Responses\Responses;
 
+use OpenAI\Contracts\Extensions\ExtensionStreamEventContract;
 use OpenAI\Contracts\ResponseContract;
 use OpenAI\Exceptions\UnknownEventException;
 use OpenAI\Responses\Concerns\ArrayAccessible;
@@ -39,6 +40,7 @@ use OpenAI\Responses\Responses\Streaming\RefusalDone;
 use OpenAI\Responses\Responses\Streaming\Response;
 use OpenAI\Responses\Responses\Streaming\WebSearchCall;
 use OpenAI\Testing\Responses\Concerns\FakeableForStreamedResponse;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-type CreateStreamedResponseType array{event: string, data: array<string, mixed>}
@@ -56,13 +58,13 @@ final class CreateStreamedResponse implements ResponseContract
 
     private function __construct(
         public readonly string $event,
-        public readonly Response|OutputItem|ContentPart|OutputTextDelta|OutputTextAnnotationAdded|OutputTextDone|RefusalDelta|RefusalDone|FunctionCallArgumentsDelta|FunctionCallArgumentsDone|ApplyPatchCallOperationDiffDelta|ApplyPatchCallOperationDiffDone|FileSearchCall|WebSearchCall|CodeInterpreterCall|CodeInterpreterCodeDelta|CodeInterpreterCodeDone|ReasoningSummaryPart|ReasoningSummaryTextDelta|ReasoningSummaryTextDone|ReasoningTextDelta|ReasoningTextDone|McpListTools|McpListToolsInProgress|McpCall|McpCallArgumentsDelta|McpCallArgumentsDone|ImageGenerationPart|ImageGenerationPartialImage|RateLimits|Error $response,
+        public readonly Response|OutputItem|ContentPart|OutputTextDelta|OutputTextAnnotationAdded|OutputTextDone|RefusalDelta|RefusalDone|FunctionCallArgumentsDelta|FunctionCallArgumentsDone|ApplyPatchCallOperationDiffDelta|ApplyPatchCallOperationDiffDone|FileSearchCall|WebSearchCall|CodeInterpreterCall|CodeInterpreterCodeDelta|CodeInterpreterCodeDone|ReasoningSummaryPart|ReasoningSummaryTextDelta|ReasoningSummaryTextDone|ReasoningTextDelta|ReasoningTextDone|McpListTools|McpListToolsInProgress|McpCall|McpCallArgumentsDelta|McpCallArgumentsDone|ImageGenerationPart|ImageGenerationPartialImage|RateLimits|Error|ExtensionStreamEventContract $response,
     ) {}
 
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public static function from(array $attributes): self
+    public static function from(array $attributes, ?ResponsesExtensionRegistry $registry = null): self
     {
         $event = $attributes['type'] ?? throw new UnknownEventException('Missing event type in streamed response');
         $meta = $attributes['__meta'];
@@ -74,9 +76,9 @@ final class CreateStreamedResponse implements ResponseContract
             'response.in_progress',
             'response.completed',
             'response.failed',
-            'response.incomplete' => Response::from($attributes, $meta), // @phpstan-ignore-line
+            'response.incomplete' => Response::from($attributes, $meta, $registry), // @phpstan-ignore-line
             'response.output_item.added',
-            'response.output_item.done' => OutputItem::from($attributes, $meta), // @phpstan-ignore-line
+            'response.output_item.done' => OutputItem::from($attributes, $meta, $registry), // @phpstan-ignore-line
             'response.content_part.added',
             'response.content_part.done' => ContentPart::from($attributes, $meta), // @phpstan-ignore-line
             'response.output_text.delta' => OutputTextDelta::from($attributes, $meta), // @phpstan-ignore-line
@@ -122,13 +124,27 @@ final class CreateStreamedResponse implements ResponseContract
             'response.image_generation_call.partial_image' => ImageGenerationPartialImage::from($attributes, $meta), // @phpstan-ignore-line
             'response.rate_limits.updated' => RateLimits::from($attributes, $meta), // @phpstan-ignore-line
             'error' => Error::from($attributes, $meta), // @phpstan-ignore-line
-            default => throw new UnknownEventException('Unknown Responses streaming event: '.$event),
+            default => self::extensionEvent($event, $attributes, $registry), // @phpstan-ignore-line
         };
 
         return new self(
             event: $event, // @phpstan-ignore-line
             response: $response,
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private static function extensionEvent(string $event, array $attributes, ?ResponsesExtensionRegistry $registry): ExtensionStreamEventContract
+    {
+        $class = $registry?->streamEvent($event);
+
+        if ($class === null) {
+            throw new UnknownEventException('Unknown Responses streaming event: '.$event);
+        }
+
+        return $class::from($attributes);
     }
 
     /**
