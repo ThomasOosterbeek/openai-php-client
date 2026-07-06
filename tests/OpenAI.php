@@ -2,8 +2,10 @@
 
 use GuzzleHttp\Client as GuzzleClient;
 use OpenAI\Client;
+use OpenAI\Exceptions\InvalidResponsesExtension;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Tests\Fixtures\Extensions\AcmeExtension;
 
 it('may create a client', function () {
     $openAI = OpenAI::client('foo');
@@ -88,3 +90,18 @@ it('sets a custom stream handler via factory', function () {
 
     expect($openAI)->toBeInstanceOf(Client::class);
 });
+
+test('factory registers responses extensions', function () {
+    $client = OpenAI::factory()
+        ->withApiKey('foo')
+        ->withResponsesExtension(AcmeExtension::class)
+        ->make();
+
+    expect($client)->toBeInstanceOf(Client::class);
+});
+
+test('factory rejects invalid responses extensions at make time', function () {
+    OpenAI::factory()
+        ->withResponsesExtension(stdClass::class) // @phpstan-ignore-line
+        ->make();
+})->throws(InvalidResponsesExtension::class);

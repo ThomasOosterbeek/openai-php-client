@@ -56,6 +56,7 @@ test('value objects')->expect('OpenAI\ValueObjects')->toOnlyUse([
 test('client')->expect('OpenAI\Client')->toOnlyUse([
     'OpenAI\Resources',
     'OpenAI\Contracts',
+    'OpenAI\ValueObjects\ResponsesExtensionRegistry',
 ]);
 
 test('openai')->expect('OpenAI')->toOnlyUse([

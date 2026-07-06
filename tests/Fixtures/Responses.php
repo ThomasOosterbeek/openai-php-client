@@ -1265,3 +1265,11 @@ function responseOutputItemApplyPatchCallDoneEvent()
 {
     return fopen(__DIR__.'/Streams/ResponseOutputItemApplyPatchCallDone.txt', 'r');
 }
+
+/**
+ * @return resource
+ */
+function responsesExtensionStream()
+{
+    return fopen(__DIR__.'/Streams/ResponsesCreateWithExtension.txt', 'r');
+}
