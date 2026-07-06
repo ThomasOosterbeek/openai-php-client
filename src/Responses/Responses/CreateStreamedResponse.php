@@ -67,8 +67,13 @@ final class CreateStreamedResponse implements ResponseContract
     public static function from(array $attributes, ?ResponsesExtensionRegistry $registry = null): self
     {
         $event = $attributes['type'] ?? throw new UnknownEventException('Missing event type in streamed response');
+
+        if (! is_string($event)) {
+            throw new UnknownEventException('Unknown Responses streaming event: '.var_export($event, true));
+        }
+
         $meta = $attributes['__meta'];
-        unset($attributes['__meta']);
+        unset($attributes['__meta'], $attributes['__event']);
 
         $response = match ($event) {
             'response.created',
@@ -124,11 +129,11 @@ final class CreateStreamedResponse implements ResponseContract
             'response.image_generation_call.partial_image' => ImageGenerationPartialImage::from($attributes, $meta), // @phpstan-ignore-line
             'response.rate_limits.updated' => RateLimits::from($attributes, $meta), // @phpstan-ignore-line
             'error' => Error::from($attributes, $meta), // @phpstan-ignore-line
-            default => self::extensionEvent($event, $attributes, $registry), // @phpstan-ignore-line
+            default => self::extensionEvent($event, $attributes, $registry),
         };
 
         return new self(
-            event: $event, // @phpstan-ignore-line
+            event: $event,
             response: $response,
         );
     }

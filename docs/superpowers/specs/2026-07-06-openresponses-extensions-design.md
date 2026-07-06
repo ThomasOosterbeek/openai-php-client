@@ -13,7 +13,7 @@ Let library users plug typed OpenResponses vendor extensions into the Responses 
 The [OpenResponses specification](https://www.openresponses.org/specification) allows implementors to extend the Responses API using implementor-slug prefixes: item types (`acme:search_result`) and streaming event types (`acme:trace_event`) that are not part of the core spec MUST be prefixed with the vendor slug. Today this client throws on any such payload:
 
 - `Actions\Responses\OutputObjects::parse` — `UnexpectedValueException` on unknown item types
-- `Actions\Responses\ItemObjects::parse` — same, for `list()` input items
+- `Actions\Responses\ItemObjects::parse` — `UnhandledMatchError` (match without default arm) on unknown item types, for `list()` input items
 - `Responses\Responses\Streaming\OutputItem::from` — `UnhandledMatchError` (match without default arm) on unknown nested item types
 - `Responses\Responses\CreateStreamedResponse::from` — `UnknownEventException` on unknown event types
 
