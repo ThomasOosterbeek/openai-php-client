@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OpenAI\Responses\Responses;
 
 use OpenAI\Actions\Responses\ItemObjects;
+use OpenAI\Contracts\Extensions\ExtensionOutputItemContract;
 use OpenAI\Contracts\ResponseContract;
 use OpenAI\Contracts\ResponseHasMetaInformationContract;
 use OpenAI\Responses\Concerns\ArrayAccessible;
@@ -51,7 +52,7 @@ final class ListInputItems implements ResponseContract, ResponseHasMetaInformati
     use HasMetaInformation;
 
     /**
-     * @param  array<int, ApplyPatchToolCallOutput|InputMessage|OutputApplyPatchToolCall|OutputMessage|OutputFileSearchToolCall|OutputComputerToolCall|ComputerToolCallOutput|LocalShellCallOutput|McpApprovalResponse|CustomToolCallOutput|OutputWebSearchToolCall|OutputFunctionToolCall|FunctionToolCallOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputProgram|OutputProgramOutput>  $data
+     * @param  array<int, ApplyPatchToolCallOutput|InputMessage|OutputApplyPatchToolCall|OutputMessage|OutputFileSearchToolCall|OutputComputerToolCall|ComputerToolCallOutput|LocalShellCallOutput|McpApprovalResponse|CustomToolCallOutput|OutputWebSearchToolCall|OutputFunctionToolCall|FunctionToolCallOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputProgram|OutputProgramOutput|ExtensionOutputItemContract>  $data
      * @param  'list'  $object
      */
     private function __construct(
@@ -85,10 +86,12 @@ final class ListInputItems implements ResponseContract, ResponseHasMetaInformati
      */
     public function toArray(): array
     {
+        // https://github.com/phpstan/phpstan/issues/8438
+        // @phpstan-ignore-next-line
         return [
             'object' => $this->object,
             'data' => array_map(
-                fn (ApplyPatchToolCallOutput|InputMessage|OutputApplyPatchToolCall|OutputMessage|OutputFileSearchToolCall|OutputFunctionToolCall|FunctionToolCallOutput|OutputWebSearchToolCall|OutputComputerToolCall|ComputerToolCallOutput|LocalShellCallOutput|McpApprovalResponse|CustomToolCallOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputProgram|OutputProgramOutput $item): array => $item->toArray(),
+                fn (ApplyPatchToolCallOutput|InputMessage|OutputApplyPatchToolCall|OutputMessage|OutputFileSearchToolCall|OutputFunctionToolCall|FunctionToolCallOutput|OutputWebSearchToolCall|OutputComputerToolCall|ComputerToolCallOutput|LocalShellCallOutput|McpApprovalResponse|CustomToolCallOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputProgram|OutputProgramOutput|ExtensionOutputItemContract $item): array => $item->toArray(),
                 $this->data,
             ),
             'first_id' => $this->firstId,

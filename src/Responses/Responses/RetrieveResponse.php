@@ -8,6 +8,7 @@ use OpenAI\Actions\Responses\OutputObjects;
 use OpenAI\Actions\Responses\OutputText;
 use OpenAI\Actions\Responses\ToolChoiceObjects;
 use OpenAI\Actions\Responses\ToolObjects;
+use OpenAI\Contracts\Extensions\ExtensionOutputItemContract;
 use OpenAI\Contracts\ResponseContract;
 use OpenAI\Contracts\ResponseHasMetaInformationContract;
 use OpenAI\Responses\Concerns\ArrayAccessible;
@@ -201,7 +202,7 @@ final class RetrieveResponse implements ResponseContract, ResponseHasMetaInforma
             'metadata' => $this->metadata ?? [],
             'model' => $this->model,
             'output' => array_map(
-                fn (OutputApplyPatchToolCall|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction $output): array => $output->toArray(),
+                fn (OutputApplyPatchToolCall|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction|ExtensionOutputItemContract $output): array => $output->toArray(),
                 $this->output
             ),
             'output_text' => $this->outputText,
