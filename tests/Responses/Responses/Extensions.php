@@ -2,7 +2,10 @@
 
 use OpenAI\Actions\Responses\ItemObjects;
 use OpenAI\Actions\Responses\OutputObjects;
+use OpenAI\Responses\Responses\CreateResponse;
+use OpenAI\Responses\Responses\ListInputItems;
 use OpenAI\Responses\Responses\Output\OutputReasoning;
+use OpenAI\Responses\Responses\RetrieveResponse;
 use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 use Tests\Fixtures\Extensions\AcmeExtension;
 use Tests\Fixtures\Extensions\AcmeSearchResult;
@@ -67,3 +70,47 @@ test('ItemObjects throws on vendor items without a registered extension', functi
 test('ItemObjects throws on unknown items when no registry is given', function () {
     ItemObjects::parse([acmeSearchResultItem()]);
 })->throws(UnexpectedValueException::class);
+
+test('CreateResponse hydrates vendor items via the registry', function () {
+    $attributes = createResponseResource();
+    $attributes['output'][] = acmeSearchResultItem();
+
+    $response = CreateResponse::from($attributes, meta(), acmeRegistry());
+
+    $vendorItem = $response->output[count($response->output) - 1];
+
+    expect($vendorItem)->toBeInstanceOf(AcmeSearchResult::class)
+        ->query->toBe('openresponses');
+
+    expect($response->toArray()['output'])->toContain(acmeSearchResultItem());
+});
+
+test('CreateResponse without a registry keeps throwing on vendor items', function () {
+    $attributes = createResponseResource();
+    $attributes['output'][] = acmeSearchResultItem();
+
+    CreateResponse::from($attributes, meta());
+})->throws(UnexpectedValueException::class);
+
+test('RetrieveResponse hydrates vendor items via the registry', function () {
+    $attributes = retrieveResponseResource();
+    $attributes['output'][] = acmeSearchResultItem();
+
+    $response = RetrieveResponse::from($attributes, meta(), acmeRegistry());
+
+    $vendorItem = $response->output[count($response->output) - 1];
+
+    expect($vendorItem)->toBeInstanceOf(AcmeSearchResult::class);
+});
+
+test('ListInputItems hydrates vendor items via the registry', function () {
+    $attributes = listInputItemsResource();
+    $attributes['data'][] = acmeSearchResultItem();
+
+    $response = ListInputItems::from($attributes, meta(), acmeRegistry());
+
+    $vendorItem = $response->data[count($response->data) - 1];
+
+    expect($vendorItem)->toBeInstanceOf(AcmeSearchResult::class)
+        ->and($response->toArray()['data'])->toContain(acmeSearchResultItem());
+});

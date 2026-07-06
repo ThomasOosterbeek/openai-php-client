@@ -37,6 +37,7 @@ test('responses')->expect('OpenAI\Responses')->toOnlyUse([
     'OpenAI\Exceptions\UnknownEventException',
     'OpenAI\Contracts',
     'OpenAI\Testing\Responses\Concerns',
+    'OpenAI\ValueObjects\ResponsesExtensionRegistry',
     'Psr\Http\Message\ResponseInterface',
     'Psr\Http\Message\StreamInterface',
 ]);
