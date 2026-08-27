@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace OpenAI\Responses\Responses\Streaming;
 
+use OpenAI\Actions\Responses\ExtensionItems;
+use OpenAI\Contracts\Extensions\ExtensionOutputItemContract;
 use OpenAI\Contracts\ResponseContract;
 use OpenAI\Contracts\ResponseHasMetaInformationContract;
 use OpenAI\Responses\Concerns\ArrayAccessible;
@@ -27,6 +29,7 @@ use OpenAI\Responses\Responses\Output\OutputToolSearchCall;
 use OpenAI\Responses\Responses\Output\OutputToolSearchOutput;
 use OpenAI\Responses\Responses\Output\OutputWebSearchToolCall;
 use OpenAI\Testing\Responses\Concerns\Fakeable;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-import-type OutputApplyPatchToolCallType from OutputApplyPatchToolCall
@@ -65,14 +68,14 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
         public readonly string $type,
         public readonly int $outputIndex,
         public readonly int $sequenceNumber,
-        public readonly OutputApplyPatchToolCall|OutputMessage|OutputCodeInterpreterToolCall|OutputFileSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputWebSearchToolCall|OutputComputerToolCall|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCompaction|OutputToolSearchCall|OutputToolSearchOutput $item,
+        public readonly OutputApplyPatchToolCall|OutputMessage|OutputCodeInterpreterToolCall|OutputFileSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputWebSearchToolCall|OutputComputerToolCall|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCompaction|OutputToolSearchCall|OutputToolSearchOutput|ExtensionOutputItemContract $item,
         private readonly MetaInformation $meta,
     ) {}
 
     /**
      * @param  OutputItemType  $attributes
      */
-    public static function from(array $attributes, MetaInformation $meta): self
+    public static function from(array $attributes, MetaInformation $meta, ?ResponsesExtensionRegistry $registry = null): self
     {
         /** @var 'message'|'file_search_call'|'function_call'|'program'|'program_output'|'web_search_call'|'computer_call'|'reasoning'|'image_generation_call'|'mcp_list_tools'|'mcp_approval_request'|'mcp_call'|'code_interpreter_call'|'compaction'|'tool_search_call'|'tool_search_output'|'apply_patch_call' $itemType */
         $itemType = $attributes['item']['type'];
@@ -95,6 +98,8 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
             'tool_search_call' => OutputToolSearchCall::from($attributes['item']),
             'tool_search_output' => OutputToolSearchOutput::from($attributes['item']),
             'apply_patch_call' => OutputApplyPatchToolCall::from($attributes['item']),
+            // @phpstan-ignore match.unreachable
+            default => ExtensionItems::resolve($attributes['item'], $registry),
         };
 
         return new self(
@@ -111,6 +116,8 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
      */
     public function toArray(): array
     {
+        // https://github.com/phpstan/phpstan/issues/8438
+        // @phpstan-ignore-next-line
         return [
             'type' => $this->type,
             'output_index' => $this->outputIndex,

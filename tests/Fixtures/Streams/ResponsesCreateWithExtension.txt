@@ -1,0 +1,5 @@
+data: {"type":"acme:trace_event","trace_id":"tr_123","spans":3}
+
+data: {"type":"response.output_item.added","output_index":0,"sequence_number":2,"item":{"type":"acme:search_result","query":"openresponses","score":0.98}}
+
+data: [DONE]

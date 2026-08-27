@@ -7,6 +7,7 @@ use OpenAI\Contracts\ResponseHasMetaInformationContract;
 use OpenAI\Contracts\ResponseStreamContract;
 use OpenAI\Exceptions\ErrorException;
 use OpenAI\Responses\Meta\MetaInformation;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 
@@ -29,6 +30,7 @@ final class StreamResponse implements ResponseHasMetaInformationContract, Respon
     public function __construct(
         private readonly string $responseClass,
         private readonly ResponseInterface $response,
+        private readonly ?ResponsesExtensionRegistry $registry = null,
     ) {
         //
     }
@@ -93,7 +95,9 @@ final class StreamResponse implements ResponseHasMetaInformationContract, Respon
 
             $attributes['__meta'] = $this->meta();
 
-            $streamEvent = $this->responseClass::from($attributes);
+            $streamEvent = $this->registry === null
+                ? $this->responseClass::from($attributes)
+                : $this->responseClass::from($attributes, $this->registry);
 
             $event = null;
 

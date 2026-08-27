@@ -6,8 +6,10 @@ use Closure;
 use Exception;
 use GuzzleHttp\Client as GuzzleClient;
 use Http\Discovery\Psr18ClientDiscovery;
+use OpenAI\Contracts\Extensions\ResponsesExtensionContract;
 use OpenAI\Transporters\HttpTransporter;
 use OpenAI\ValueObjects\ApiKey;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 use OpenAI\ValueObjects\Transporter\BaseUri;
 use OpenAI\ValueObjects\Transporter\Headers;
 use OpenAI\ValueObjects\Transporter\QueryParams;
@@ -56,6 +58,13 @@ final class Factory
      * @var array<string, string|int>
      */
     private array $queryParams = [];
+
+    /**
+     * The OpenResponses extensions for the Responses API.
+     *
+     * @var array<int, class-string<ResponsesExtensionContract>>
+     */
+    private array $responsesExtensions = [];
 
     private ?Closure $streamHandler = null;
 
@@ -142,6 +151,18 @@ final class Factory
     }
 
     /**
+     * Registers an OpenResponses extension for the Responses API.
+     *
+     * @param  class-string<ResponsesExtensionContract>  $extension
+     */
+    public function withResponsesExtension(string $extension): self
+    {
+        $this->responsesExtensions[] = $extension;
+
+        return $this;
+    }
+
+    /**
      * Creates a new Open AI Client.
      */
     public function make(): Client
@@ -177,7 +198,11 @@ final class Factory
 
         $transporter = new HttpTransporter($client, $baseUri, $headers, $queryParams, $sendAsync);
 
-        return new Client($transporter);
+        $extensions = $this->responsesExtensions === []
+            ? null
+            : ResponsesExtensionRegistry::from($this->responsesExtensions);
+
+        return new Client($transporter, $extensions);
     }
 
     /**

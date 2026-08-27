@@ -8,6 +8,7 @@ use OpenAI\Actions\Responses\OutputObjects;
 use OpenAI\Actions\Responses\OutputText;
 use OpenAI\Actions\Responses\ToolChoiceObjects;
 use OpenAI\Actions\Responses\ToolObjects;
+use OpenAI\Contracts\Extensions\ExtensionOutputItemContract;
 use OpenAI\Contracts\ResponseContract;
 use OpenAI\Contracts\ResponseHasMetaInformationContract;
 use OpenAI\Responses\Concerns\ArrayAccessible;
@@ -47,6 +48,7 @@ use OpenAI\Responses\Responses\Tool\WebSearchTool;
 use OpenAI\Responses\Responses\ToolChoice\FunctionToolChoice;
 use OpenAI\Responses\Responses\ToolChoice\HostedToolChoice;
 use OpenAI\Testing\Responses\Concerns\Fakeable;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-import-type ResponseFormatType from CreateResponseFormat
@@ -125,9 +127,9 @@ final class RetrieveResponse implements ResponseContract, ResponseHasMetaInforma
     /**
      * @param  RetrieveResponseType  $attributes
      */
-    public static function from(array $attributes, MetaInformation $meta): self
+    public static function from(array $attributes, MetaInformation $meta, ?ResponsesExtensionRegistry $registry = null): self
     {
-        $output = OutputObjects::parse($attributes['output']);
+        $output = OutputObjects::parse($attributes['output'], $registry);
         $toolChoice = ToolChoiceObjects::parse($attributes['tool_choice']);
         $tools = ToolObjects::parse($attributes['tools']);
 
@@ -201,7 +203,7 @@ final class RetrieveResponse implements ResponseContract, ResponseHasMetaInforma
             'metadata' => $this->metadata ?? [],
             'model' => $this->model,
             'output' => array_map(
-                fn (OutputApplyPatchToolCall|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction $output): array => $output->toArray(),
+                fn (OutputApplyPatchToolCall|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction|ExtensionOutputItemContract $output): array => $output->toArray(),
                 $this->output
             ),
             'output_text' => $this->outputText,

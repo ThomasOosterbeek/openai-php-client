@@ -28,14 +28,17 @@ use OpenAI\Resources\Realtime;
 use OpenAI\Resources\Responses;
 use OpenAI\Resources\Threads;
 use OpenAI\Resources\VectorStores;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 final class Client implements ClientContract
 {
     /**
      * Creates a Client instance with the given API token.
      */
-    public function __construct(private readonly TransporterContract $transporter)
-    {
+    public function __construct(
+        private readonly TransporterContract $transporter,
+        private readonly ?ResponsesExtensionRegistry $extensions = null,
+    ) {
         // ..
     }
 
@@ -46,7 +49,7 @@ final class Client implements ClientContract
      */
     public function responses(): Responses
     {
-        return new Responses($this->transporter);
+        return new Responses($this->transporter, $this->extensions);
     }
 
     /**

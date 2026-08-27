@@ -3,6 +3,7 @@
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Stream;
 use OpenAI\Exceptions\InvalidArgumentException;
+use OpenAI\Exceptions\UnknownEventException;
 use OpenAI\Responses\Meta\MetaInformation;
 use OpenAI\Responses\Responses\CreateResponse;
 use OpenAI\Responses\Responses\CreateStreamedResponse;
@@ -13,6 +14,10 @@ use OpenAI\Responses\Responses\ReferencePromptObject;
 use OpenAI\Responses\Responses\RetrieveResponse;
 use OpenAI\Responses\Responses\Streaming\Response as StreamedResponse;
 use OpenAI\Responses\StreamResponse;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
+use Tests\Fixtures\Extensions\AcmeExtension;
+use Tests\Fixtures\Extensions\AcmeSearchResult;
+use Tests\Fixtures\Extensions\AcmeTraceEvent;
 
 test('create', function () {
     $client = mockClient('POST', 'responses', [
@@ -405,4 +410,145 @@ test('cancel', function () {
 
     expect($result->meta())
         ->toBeInstanceOf(MetaInformation::class);
+});
+
+test('create hydrates vendor extension items', function () {
+    $resource = createResponseResource();
+    $resource['output'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+
+    $client = mockClient('POST', 'responses', [
+        'model' => 'gpt-4o',
+        'input' => 'search please',
+    ], OpenAI\ValueObjects\Transporter\Response::from($resource, metaHeaders()), extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));
+
+    $result = $client->responses()->create([
+        'model' => 'gpt-4o',
+        'input' => 'search please',
+    ]);
+
+    $vendorItem = $result->output[count($result->output) - 1];
+
+    expect($vendorItem)->toBeInstanceOf(AcmeSearchResult::class)
+        ->query->toBe('openresponses')
+        ->score->toBe(0.98);
+});
+
+test('create throws on vendor extension items when none are registered', function () {
+    $resource = createResponseResource();
+    $resource['output'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+
+    $client = mockClient('POST', 'responses', [
+        'model' => 'gpt-4o',
+        'input' => 'search please',
+    ], OpenAI\ValueObjects\Transporter\Response::from($resource, metaHeaders()));
+
+    $client->responses()->create([
+        'model' => 'gpt-4o',
+        'input' => 'search please',
+    ]);
+})->throws(UnexpectedValueException::class);
+
+test('retrieve hydrates vendor extension items', function () {
+    $resource = retrieveResponseResource();
+    $resource['output'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+
+    $client = mockClient('GET', 'responses/resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c', [], OpenAI\ValueObjects\Transporter\Response::from($resource, metaHeaders()), extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));
+
+    $result = $client->responses()->retrieve('resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c');
+
+    $vendorItem = $result->output[count($result->output) - 1];
+
+    expect($vendorItem)->toBeInstanceOf(AcmeSearchResult::class);
+});
+
+test('list hydrates vendor extension input items', function () {
+    $resource = listInputItemsResource();
+    $resource['data'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+
+    $client = mockClient('GET', 'responses/resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c/input_items', [], OpenAI\ValueObjects\Transporter\Response::from($resource, metaHeaders()), extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));
+
+    $result = $client->responses()->list('resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c');
+
+    $vendorItem = $result->data[count($result->data) - 1];
+
+    expect($vendorItem)->toBeInstanceOf(AcmeSearchResult::class);
+});
+
+test('create streamed hydrates vendor extension events and items', function () {
+    $response = new Response(
+        headers: metaHeaders(),
+        body: new Stream(responsesExtensionStream()),
+    );
+
+    $client = mockStreamClient('POST', 'responses', [
+        'model' => 'gpt-4o',
+        'input' => 'search please',
+        'stream' => true,
+    ], $response, extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));
+
+    $result = $client->responses()->createStreamed([
+        'model' => 'gpt-4o',
+        'input' => 'search please',
+    ]);
+
+    $events = iterator_to_array($result->getIterator());
+
+    expect($events[0]->event)->toBe('acme:trace_event')
+        ->and($events[0]->response)->toBeInstanceOf(AcmeTraceEvent::class)
+        ->and($events[0]->response->traceId)->toBe('tr_123');
+
+    expect($events[1]->event)->toBe('response.output_item.added')
+        ->and($events[1]->response->item)->toBeInstanceOf(AcmeSearchResult::class);
+});
+
+test('create streamed throws on vendor events when none are registered', function () {
+    $response = new Response(
+        headers: metaHeaders(),
+        body: new Stream(responsesExtensionStream()),
+    );
+
+    $client = mockStreamClient('POST', 'responses', [
+        'model' => 'gpt-4o',
+        'input' => 'search please',
+        'stream' => true,
+    ], $response);
+
+    $result = $client->responses()->createStreamed([
+        'model' => 'gpt-4o',
+        'input' => 'search please',
+    ]);
+
+    iterator_to_array($result->getIterator());
+})->throws(UnknownEventException::class);
+
+test('cancel hydrates vendor extension items', function () {
+    $resource = retrieveResponseResource();
+    $resource['output'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+
+    $client = mockClient('POST', 'responses/resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c/cancel', [
+    ], OpenAI\ValueObjects\Transporter\Response::from($resource, metaHeaders()), extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));
+
+    $result = $client->responses()->cancel('resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c');
+
+    $vendorItem = $result->output[count($result->output) - 1];
+
+    expect($vendorItem)->toBeInstanceOf(AcmeSearchResult::class);
+});
+
+test('retrieve streamed hydrates vendor extension events', function () {
+    $response = new Response(
+        headers: metaHeaders(),
+        body: new Stream(responsesExtensionStream()),
+    );
+
+    $client = mockStreamClient('GET', 'responses/resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c', [
+        'stream' => 'true',
+    ], $response, extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));
+
+    $result = $client->responses()->retrieveStreamed('resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c');
+
+    $events = iterator_to_array($result->getIterator());
+
+    expect($events[0]->response)->toBeInstanceOf(AcmeTraceEvent::class)
+        ->and($events[1]->response->item)->toBeInstanceOf(AcmeSearchResult::class);
 });
