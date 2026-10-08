@@ -56,3 +56,32 @@ test('rejects item classes not implementing the item contract', function () {
 test('rejects the same type registered by two extensions', function () {
     ResponsesExtensionRegistry::from([AcmeExtension::class, DuplicateAcmeExtension::class]);
 })->throws(InvalidResponsesExtension::class, 'more than one extension');
+
+test('scoped exposes the registry only for the duration of the callback', function () {
+    $registry = ResponsesExtensionRegistry::from([AcmeExtension::class]);
+
+    $inside = ResponsesExtensionRegistry::scoped($registry, fn () => ResponsesExtensionRegistry::current());
+
+    expect($inside)->toBe($registry)
+        ->and(ResponsesExtensionRegistry::current())->toBeNull();
+});
+
+test('scoped restores the previous registry when the callback throws', function () {
+    $registry = ResponsesExtensionRegistry::from([AcmeExtension::class]);
+
+    try {
+        ResponsesExtensionRegistry::scoped($registry, fn () => throw new RuntimeException);
+    } catch (RuntimeException) {
+        //
+    }
+
+    expect(ResponsesExtensionRegistry::current())->toBeNull();
+});
+
+test('a nested null scope hides the outer registry', function () {
+    $registry = ResponsesExtensionRegistry::from([AcmeExtension::class]);
+
+    $inner = ResponsesExtensionRegistry::scoped($registry, fn () => ResponsesExtensionRegistry::scoped(null, fn () => ResponsesExtensionRegistry::current()));
+
+    expect($inner)->toBeNull();
+});

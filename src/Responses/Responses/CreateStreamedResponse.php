@@ -68,7 +68,7 @@ final class CreateStreamedResponse implements ResponseContract
     /**
      * @param  array<string, mixed>  $attributes
      */
-    public static function from(array $attributes, ?ResponsesExtensionRegistry $registry = null): self
+    public static function from(array $attributes): self
     {
         $event = $attributes['type'] ?? throw new UnknownEventException('Missing event type in streamed response');
 
@@ -85,9 +85,9 @@ final class CreateStreamedResponse implements ResponseContract
             'response.in_progress',
             'response.completed',
             'response.failed',
-            'response.incomplete' => Response::from($attributes, $meta, $registry), // @phpstan-ignore-line
+            'response.incomplete' => Response::from($attributes, $meta), // @phpstan-ignore-line
             'response.output_item.added',
-            'response.output_item.done' => OutputItem::from($attributes, $meta, $registry), // @phpstan-ignore-line
+            'response.output_item.done' => OutputItem::from($attributes, $meta), // @phpstan-ignore-line
             'response.content_part.added',
             'response.content_part.done' => ContentPart::from($attributes, $meta), // @phpstan-ignore-line
             'response.output_text.delta' => OutputTextDelta::from($attributes, $meta), // @phpstan-ignore-line
@@ -138,7 +138,7 @@ final class CreateStreamedResponse implements ResponseContract
             'response.image_generation_call.partial_image' => ImageGenerationPartialImage::from($attributes, $meta), // @phpstan-ignore-line
             'response.rate_limits.updated' => RateLimits::from($attributes, $meta), // @phpstan-ignore-line
             'error' => Error::from($attributes, $meta), // @phpstan-ignore-line
-            default => self::extensionEvent($event, $attributes, $registry),
+            default => self::extensionEvent($event, $attributes),
         };
 
         return new self(
@@ -150,9 +150,9 @@ final class CreateStreamedResponse implements ResponseContract
     /**
      * @param  array<string, mixed>  $attributes
      */
-    private static function extensionEvent(string $event, array $attributes, ?ResponsesExtensionRegistry $registry): ExtensionStreamEventContract
+    private static function extensionEvent(string $event, array $attributes): ExtensionStreamEventContract
     {
-        $class = $registry?->streamEvent($event);
+        $class = ResponsesExtensionRegistry::current()?->streamEvent($event);
 
         if ($class === null) {
             throw new UnknownEventException('Unknown Responses streaming event: '.$event);

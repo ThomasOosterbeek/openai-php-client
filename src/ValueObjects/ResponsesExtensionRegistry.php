@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OpenAI\ValueObjects;
 
+use Closure;
 use OpenAI\Contracts\Extensions\ExtensionOutputItemContract;
 use OpenAI\Contracts\Extensions\ExtensionStreamEventContract;
 use OpenAI\Contracts\Extensions\ResponsesExtensionContract;
@@ -14,6 +15,8 @@ use OpenAI\Exceptions\InvalidResponsesExtension;
  */
 final class ResponsesExtensionRegistry
 {
+    private static ?self $current = null;
+
     /**
      * @param  array<string, class-string<ExtensionOutputItemContract>>  $outputItems
      * @param  array<string, class-string<ExtensionStreamEventContract>>  $streamEvents
@@ -64,6 +67,31 @@ final class ResponsesExtensionRegistry
         }
 
         return new self($outputItems, $streamEvents);
+    }
+
+    /**
+     * Runs the callback with the given registry as the current one, restoring the previous one afterwards.
+     *
+     * @template TReturn
+     *
+     * @param  Closure(): TReturn  $callback
+     * @return TReturn
+     */
+    public static function scoped(?self $registry, Closure $callback): mixed
+    {
+        $previous = self::$current;
+        self::$current = $registry;
+
+        try {
+            return $callback();
+        } finally {
+            self::$current = $previous;
+        }
+    }
+
+    public static function current(): ?self
+    {
+        return self::$current;
     }
 
     /**

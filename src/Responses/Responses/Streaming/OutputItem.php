@@ -31,7 +31,6 @@ use OpenAI\Responses\Responses\Output\OutputToolSearchCall;
 use OpenAI\Responses\Responses\Output\OutputToolSearchOutput;
 use OpenAI\Responses\Responses\Output\OutputWebSearchToolCall;
 use OpenAI\Testing\Responses\Concerns\Fakeable;
-use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-import-type OutputApplyPatchToolCallType from OutputApplyPatchToolCall
@@ -79,7 +78,7 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
     /**
      * @param  OutputItemType  $attributes
      */
-    public static function from(array $attributes, MetaInformation $meta, ?ResponsesExtensionRegistry $registry = null): self
+    public static function from(array $attributes, MetaInformation $meta): self
     {
         /** @var 'message'|'file_search_call'|'function_call'|'program'|'program_output'|'web_search_call'|'computer_call'|'reasoning'|'image_generation_call'|'mcp_list_tools'|'mcp_approval_request'|'mcp_call'|'code_interpreter_call'|'compaction'|'tool_search_call'|'tool_search_output'|'apply_patch_call'|'shell_call'|'shell_call_output' $itemType */
         $itemType = $attributes['item']['type'];
@@ -105,7 +104,7 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
             'tool_search_output' => OutputToolSearchOutput::from($attributes['item']),
             'apply_patch_call' => OutputApplyPatchToolCall::from($attributes['item']),
             // @phpstan-ignore match.unreachable
-            default => ExtensionItems::resolve($attributes['item'], $registry),
+            default => ExtensionItems::resolve($attributes['item']),
         };
 
         return new self(

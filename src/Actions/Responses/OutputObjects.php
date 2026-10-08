@@ -26,7 +26,6 @@ use OpenAI\Responses\Responses\Output\OutputShellCallOutput;
 use OpenAI\Responses\Responses\Output\OutputToolSearchCall;
 use OpenAI\Responses\Responses\Output\OutputToolSearchOutput;
 use OpenAI\Responses\Responses\Output\OutputWebSearchToolCall;
-use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-import-type OutputApplyPatchToolCallType from OutputApplyPatchToolCall
@@ -60,7 +59,7 @@ final class OutputObjects
      * @param  ResponseOutputObjectTypes  $outputItems
      * @return ResponseOutputObjectReturnType
      */
-    public static function parse(array $outputItems, ?ResponsesExtensionRegistry $registry = null): array
+    public static function parse(array $outputItems): array
     {
         return array_map(
             fn (array $item): OutputApplyPatchToolCall|OutputShellCall|OutputShellCallOutput|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction|ExtensionOutputItemContract => match ($item['type']) {
@@ -85,7 +84,7 @@ final class OutputObjects
                 'tool_search_output' => OutputToolSearchOutput::from($item),
                 'compaction' => OutputCompaction::from($item),
                 'apply_patch_call' => OutputApplyPatchToolCall::from($item),
-                default => ExtensionItems::resolve($item, $registry),
+                default => ExtensionItems::resolve($item),
             },
             $outputItems,
         );

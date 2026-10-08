@@ -50,7 +50,7 @@ final class Responses implements ResponsesContract
         /** @var Response<CreateResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return CreateResponse::from($response->data(), $response->meta(), $this->extensions);
+        return ResponsesExtensionRegistry::scoped($this->extensions, fn (): CreateResponse => CreateResponse::from($response->data(), $response->meta()));
     }
 
     /**
@@ -85,7 +85,7 @@ final class Responses implements ResponsesContract
         /** @var Response<RetrieveResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return RetrieveResponse::from($response->data(), $response->meta(), $this->extensions);
+        return ResponsesExtensionRegistry::scoped($this->extensions, fn (): RetrieveResponse => RetrieveResponse::from($response->data(), $response->meta()));
     }
 
     /**
@@ -120,7 +120,7 @@ final class Responses implements ResponsesContract
         /** @var Response<RetrieveResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return RetrieveResponse::from($response->data(), $response->meta(), $this->extensions);
+        return ResponsesExtensionRegistry::scoped($this->extensions, fn (): RetrieveResponse => RetrieveResponse::from($response->data(), $response->meta()));
     }
 
     /**
@@ -152,7 +152,7 @@ final class Responses implements ResponsesContract
         /** @var Response<ListInputItemsType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return ListInputItems::from($response->data(), $response->meta(), $this->extensions);
+        return ResponsesExtensionRegistry::scoped($this->extensions, fn (): ListInputItems => ListInputItems::from($response->data(), $response->meta()));
     }
 
     /**

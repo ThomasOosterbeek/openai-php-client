@@ -97,9 +97,7 @@ final class StreamResponse implements ResponseHasMetaInformationContract, Respon
 
             $attributes['__meta'] = $this->meta();
 
-            $streamEvent = $this->registry === null
-                ? $this->responseClass::from($attributes)
-                : $this->responseClass::from($attributes, $this->registry);
+            $streamEvent = ResponsesExtensionRegistry::scoped($this->registry, fn () => $this->responseClass::from($attributes));
 
             $event = null;
 

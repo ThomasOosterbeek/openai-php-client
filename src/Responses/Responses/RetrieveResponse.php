@@ -51,7 +51,6 @@ use OpenAI\Responses\Responses\Tool\WebSearchTool;
 use OpenAI\Responses\Responses\ToolChoice\FunctionToolChoice;
 use OpenAI\Responses\Responses\ToolChoice\HostedToolChoice;
 use OpenAI\Testing\Responses\Concerns\Fakeable;
-use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-import-type ResponseFormatType from CreateResponseFormat
@@ -130,9 +129,9 @@ final class RetrieveResponse implements ResponseContract, ResponseHasMetaInforma
     /**
      * @param  RetrieveResponseType  $attributes
      */
-    public static function from(array $attributes, MetaInformation $meta, ?ResponsesExtensionRegistry $registry = null): self
+    public static function from(array $attributes, MetaInformation $meta): self
     {
-        $output = OutputObjects::parse($attributes['output'], $registry);
+        $output = OutputObjects::parse($attributes['output']);
         $toolChoice = ToolChoiceObjects::parse($attributes['tool_choice']);
         $tools = ToolObjects::parse($attributes['tools']);
 

@@ -11,7 +11,6 @@ use OpenAI\Responses\Concerns\HasMetaInformation;
 use OpenAI\Responses\Meta\MetaInformation;
 use OpenAI\Responses\Responses\CreateResponse;
 use OpenAI\Testing\Responses\Concerns\Fakeable;
-use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-import-type CreateResponseType from CreateResponse
@@ -40,11 +39,11 @@ final class Response implements ResponseContract, ResponseHasMetaInformationCont
     /**
      * @param  ResponseType  $attributes
      */
-    public static function from(array $attributes, MetaInformation $meta, ?ResponsesExtensionRegistry $registry = null): self
+    public static function from(array $attributes, MetaInformation $meta): self
     {
         return new self(
             type: $attributes['type'],
-            response: CreateResponse::from($attributes['response'], $meta, $registry),
+            response: CreateResponse::from($attributes['response'], $meta),
             sequenceNumber: $attributes['sequence_number'],
             meta: $meta,
         );

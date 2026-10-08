@@ -37,7 +37,6 @@ use OpenAI\Responses\Responses\Output\OutputShellCall;
 use OpenAI\Responses\Responses\Output\OutputShellCallOutput;
 use OpenAI\Responses\Responses\Output\OutputWebSearchToolCall;
 use OpenAI\Testing\Responses\Concerns\Fakeable;
-use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-import-type ResponseItemObjectTypes from ItemObjects
@@ -70,9 +69,9 @@ final class ListInputItems implements ResponseContract, ResponseHasMetaInformati
     /**
      * @param  ListInputItemsType  $attributes
      */
-    public static function from(array $attributes, MetaInformation $meta, ?ResponsesExtensionRegistry $registry = null): self
+    public static function from(array $attributes, MetaInformation $meta): self
     {
-        $data = ItemObjects::parse($attributes['data'], $registry);
+        $data = ItemObjects::parse($attributes['data']);
 
         return new self(
             object: $attributes['object'],

@@ -14,9 +14,9 @@ use Tests\Fixtures\Extensions\AcmeExtension;
 use Tests\Fixtures\Extensions\AcmeSearchResult;
 use Tests\Fixtures\Extensions\AcmeTraceEvent;
 
-function acmeRegistry(): ResponsesExtensionRegistry
+function withAcme(Closure $callback): mixed
 {
-    return ResponsesExtensionRegistry::from([AcmeExtension::class]);
+    return ResponsesExtensionRegistry::scoped(ResponsesExtensionRegistry::from([AcmeExtension::class]), $callback);
 }
 
 function acmeSearchResultItem(): array
@@ -29,7 +29,7 @@ function acmeSearchResultItem(): array
 }
 
 test('OutputObjects routes registered vendor items to the extension class', function () {
-    $output = OutputObjects::parse([acmeSearchResultItem()], acmeRegistry());
+    $output = withAcme(fn () => OutputObjects::parse([acmeSearchResultItem()]));
 
     expect($output[0])->toBeInstanceOf(AcmeSearchResult::class)
         ->type->toBe('acme:search_result')
@@ -38,7 +38,7 @@ test('OutputObjects routes registered vendor items to the extension class', func
 });
 
 test('OutputObjects throws on vendor items without a registered extension', function () {
-    OutputObjects::parse([['type' => 'other:thing']], acmeRegistry());
+    withAcme(fn () => OutputObjects::parse([['type' => 'other:thing']]));
 })->throws(UnexpectedValueException::class);
 
 test('OutputObjects throws on vendor items when no registry is given', function () {
@@ -46,7 +46,7 @@ test('OutputObjects throws on vendor items when no registry is given', function 
 })->throws(UnexpectedValueException::class);
 
 test('OutputObjects still parses standard items alongside vendor items', function () {
-    $output = OutputObjects::parse([
+    $output = withAcme(fn () => OutputObjects::parse([
         [
             'type' => 'reasoning',
             'id' => 'rs_1',
@@ -54,21 +54,21 @@ test('OutputObjects still parses standard items alongside vendor items', functio
             'summary' => [],
         ],
         acmeSearchResultItem(),
-    ], acmeRegistry());
+    ]));
 
     expect($output[0])->toBeInstanceOf(OutputReasoning::class)
         ->and($output[1])->toBeInstanceOf(AcmeSearchResult::class);
 });
 
 test('ItemObjects routes registered vendor items to the extension class', function () {
-    $items = ItemObjects::parse([acmeSearchResultItem()], acmeRegistry());
+    $items = withAcme(fn () => ItemObjects::parse([acmeSearchResultItem()]));
 
     expect($items[0])->toBeInstanceOf(AcmeSearchResult::class)
         ->query->toBe('openresponses');
 });
 
 test('ItemObjects throws on vendor items without a registered extension', function () {
-    ItemObjects::parse([['type' => 'other:thing']], acmeRegistry());
+    withAcme(fn () => ItemObjects::parse([['type' => 'other:thing']]));
 })->throws(UnexpectedValueException::class);
 
 test('ItemObjects throws on unknown items when no registry is given', function () {
@@ -79,7 +79,7 @@ test('CreateResponse hydrates vendor items via the registry', function () {
     $attributes = createResponseResource();
     $attributes['output'][] = acmeSearchResultItem();
 
-    $response = CreateResponse::from($attributes, meta(), acmeRegistry());
+    $response = withAcme(fn () => CreateResponse::from($attributes, meta()));
 
     $vendorItem = $response->output[count($response->output) - 1];
 
@@ -100,7 +100,7 @@ test('RetrieveResponse hydrates vendor items via the registry', function () {
     $attributes = retrieveResponseResource();
     $attributes['output'][] = acmeSearchResultItem();
 
-    $response = RetrieveResponse::from($attributes, meta(), acmeRegistry());
+    $response = withAcme(fn () => RetrieveResponse::from($attributes, meta()));
 
     $vendorItem = $response->output[count($response->output) - 1];
 
@@ -111,7 +111,7 @@ test('ListInputItems hydrates vendor items via the registry', function () {
     $attributes = listInputItemsResource();
     $attributes['data'][] = acmeSearchResultItem();
 
-    $response = ListInputItems::from($attributes, meta(), acmeRegistry());
+    $response = withAcme(fn () => ListInputItems::from($attributes, meta()));
 
     $vendorItem = $response->data[count($response->data) - 1];
 
@@ -130,7 +130,7 @@ function acmeTraceEventPayload(): array
 }
 
 test('CreateStreamedResponse routes registered vendor events to the extension class', function () {
-    $response = CreateStreamedResponse::from(acmeTraceEventPayload(), acmeRegistry());
+    $response = withAcme(fn () => CreateStreamedResponse::from(acmeTraceEventPayload()));
 
     expect($response->event)->toBe('acme:trace_event')
         ->and($response->response)->toBeInstanceOf(AcmeTraceEvent::class)
@@ -144,10 +144,10 @@ test('CreateStreamedResponse routes registered vendor events to the extension cl
 });
 
 test('CreateStreamedResponse throws on vendor events without a registered extension', function () {
-    CreateStreamedResponse::from([
+    withAcme(fn () => CreateStreamedResponse::from([
         'type' => 'other:thing',
         '__meta' => meta(),
-    ], acmeRegistry());
+    ]));
 })->throws(UnknownEventException::class, 'Unknown Responses streaming event: other:thing');
 
 test('CreateStreamedResponse without a registry keeps throwing on vendor events', function () {
@@ -155,31 +155,31 @@ test('CreateStreamedResponse without a registry keeps throwing on vendor events'
 })->throws(UnknownEventException::class);
 
 test('streamed output_item events hydrate nested vendor items via the registry', function () {
-    $response = CreateStreamedResponse::from([
+    $response = withAcme(fn () => CreateStreamedResponse::from([
         'type' => 'response.output_item.added',
         'output_index' => 0,
         'sequence_number' => 2,
         'item' => acmeSearchResultItem(),
         '__meta' => meta(),
-    ], acmeRegistry());
+    ]));
 
     expect($response->response)->toBeInstanceOf(OutputItem::class)
         ->and($response->response->item)->toBeInstanceOf(AcmeSearchResult::class);
 });
 
 test('CreateStreamedResponse throws on non-string event types instead of a TypeError', function () {
-    CreateStreamedResponse::from([
+    withAcme(fn () => CreateStreamedResponse::from([
         'type' => 123,
         '__meta' => meta(),
-    ], acmeRegistry());
+    ]));
 })->throws(UnknownEventException::class);
 
 test('streamed output_item events throw on unknown nested item types', function () {
-    CreateStreamedResponse::from([
+    withAcme(fn () => CreateStreamedResponse::from([
         'type' => 'response.output_item.added',
         'output_index' => 0,
         'sequence_number' => 2,
         'item' => ['type' => 'other:thing'],
         '__meta' => meta(),
-    ], acmeRegistry());
+    ]));
 })->throws(UnexpectedValueException::class);

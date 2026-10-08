@@ -13,11 +13,11 @@ final class ExtensionItems
     /**
      * @param  array<string, mixed>  $item
      */
-    public static function resolve(array $item, ?ResponsesExtensionRegistry $registry): ExtensionOutputItemContract
+    public static function resolve(array $item): ExtensionOutputItemContract
     {
         $type = $item['type'] ?? null;
 
-        $class = is_string($type) ? $registry?->outputItem($type) : null;
+        $class = is_string($type) ? ResponsesExtensionRegistry::current()?->outputItem($type) : null;
 
         if ($class === null) {
             throw new UnexpectedValueException('Uh oh! We do not recognize this type. Please submit a bug to openai-php/client on GitHub!');
