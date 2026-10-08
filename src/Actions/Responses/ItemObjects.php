@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace OpenAI\Actions\Responses;
 
-use OpenAI\Responses\Responses\Input\ApplyPatchToolCallOutput;
 use OpenAI\Contracts\Extensions\ExtensionOutputItemContract;
+use OpenAI\Responses\Responses\Input\ApplyPatchToolCallOutput;
 use OpenAI\Responses\Responses\Input\ComputerToolCallOutput;
 use OpenAI\Responses\Responses\Input\CustomToolCallOutput;
 use OpenAI\Responses\Responses\Input\FunctionToolCallOutput;
@@ -96,7 +96,6 @@ final class ItemObjects
                 'program_output' => OutputProgramOutput::from($item),
                 'apply_patch_call' => OutputApplyPatchToolCall::from($item),
                 'apply_patch_call_output' => ApplyPatchToolCallOutput::from($item),
-                // @phpstan-ignore match.unreachable
                 default => ExtensionItems::resolve($item, $registry),
             },
             $outputItems,
