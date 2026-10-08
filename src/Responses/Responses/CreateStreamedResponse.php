@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OpenAI\Responses\Responses;
 
+use OpenAI\Contracts\Extensions\ExtensionStreamEventContract;
 use OpenAI\Contracts\ResponseContract;
 use OpenAI\Exceptions\UnknownEventException;
 use OpenAI\Responses\Concerns\ArrayAccessible;
@@ -43,6 +44,7 @@ use OpenAI\Responses\Responses\Streaming\ShellCallOutputContentDelta;
 use OpenAI\Responses\Responses\Streaming\ShellCallOutputContentDone;
 use OpenAI\Responses\Responses\Streaming\WebSearchCall;
 use OpenAI\Testing\Responses\Concerns\FakeableForStreamedResponse;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 
 /**
  * @phpstan-type CreateStreamedResponseType array{event: string, data: array<string, mixed>}
@@ -60,7 +62,7 @@ final class CreateStreamedResponse implements ResponseContract
 
     private function __construct(
         public readonly string $event,
-        public readonly Response|OutputItem|ContentPart|OutputTextDelta|OutputTextAnnotationAdded|OutputTextDone|RefusalDelta|RefusalDone|FunctionCallArgumentsDelta|FunctionCallArgumentsDone|ApplyPatchCallOperationDiffDelta|ApplyPatchCallOperationDiffDone|ShellCallCommand|ShellCallCommandDelta|ShellCallOutputContentDelta|ShellCallOutputContentDone|FileSearchCall|WebSearchCall|CodeInterpreterCall|CodeInterpreterCodeDelta|CodeInterpreterCodeDone|ReasoningSummaryPart|ReasoningSummaryTextDelta|ReasoningSummaryTextDone|ReasoningTextDelta|ReasoningTextDone|McpListTools|McpListToolsInProgress|McpCall|McpCallArgumentsDelta|McpCallArgumentsDone|ImageGenerationPart|ImageGenerationPartialImage|RateLimits|Error $response,
+        public readonly Response|OutputItem|ContentPart|OutputTextDelta|OutputTextAnnotationAdded|OutputTextDone|RefusalDelta|RefusalDone|FunctionCallArgumentsDelta|FunctionCallArgumentsDone|ApplyPatchCallOperationDiffDelta|ApplyPatchCallOperationDiffDone|ShellCallCommand|ShellCallCommandDelta|ShellCallOutputContentDelta|ShellCallOutputContentDone|FileSearchCall|WebSearchCall|CodeInterpreterCall|CodeInterpreterCodeDelta|CodeInterpreterCodeDone|ReasoningSummaryPart|ReasoningSummaryTextDelta|ReasoningSummaryTextDone|ReasoningTextDelta|ReasoningTextDone|McpListTools|McpListToolsInProgress|McpCall|McpCallArgumentsDelta|McpCallArgumentsDone|ImageGenerationPart|ImageGenerationPartialImage|RateLimits|Error|ExtensionStreamEventContract $response,
     ) {}
 
     /**
@@ -69,8 +71,13 @@ final class CreateStreamedResponse implements ResponseContract
     public static function from(array $attributes): self
     {
         $event = $attributes['type'] ?? throw new UnknownEventException('Missing event type in streamed response');
+
+        if (! is_string($event)) {
+            throw new UnknownEventException('Unknown Responses streaming event: '.var_export($event, true));
+        }
+
         $meta = $attributes['__meta'];
-        unset($attributes['__meta']);
+        unset($attributes['__meta'], $attributes['__event']);
 
         $response = match ($event) {
             'response.created',
@@ -131,13 +138,27 @@ final class CreateStreamedResponse implements ResponseContract
             'response.image_generation_call.partial_image' => ImageGenerationPartialImage::from($attributes, $meta), // @phpstan-ignore-line
             'response.rate_limits.updated' => RateLimits::from($attributes, $meta), // @phpstan-ignore-line
             'error' => Error::from($attributes, $meta), // @phpstan-ignore-line
-            default => throw new UnknownEventException('Unknown Responses streaming event: '.$event),
+            default => self::extensionEvent($event, $attributes),
         };
 
         return new self(
-            event: $event, // @phpstan-ignore-line
+            event: $event,
             response: $response,
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private static function extensionEvent(string $event, array $attributes): ExtensionStreamEventContract
+    {
+        $class = ResponsesExtensionRegistry::current()?->streamEvent($event);
+
+        if ($class === null) {
+            throw new UnknownEventException('Unknown Responses streaming event: '.$event);
+        }
+
+        return $class::from($attributes);
     }
 
     /**

@@ -1284,3 +1284,23 @@ function responseShellEvents()
 {
     return fopen(__DIR__.'/Streams/ResponseShell.txt', 'r');
 }
+
+/**
+ * @return resource
+ */
+function responsesExtensionStream()
+{
+    return fopen(__DIR__.'/Streams/ResponsesCreateWithExtension.txt', 'r');
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function acmeSearchResultItem(): array
+{
+    return [
+        'type' => 'acme:search_result',
+        'query' => 'openresponses',
+        'score' => 0.98,
+    ];
+}

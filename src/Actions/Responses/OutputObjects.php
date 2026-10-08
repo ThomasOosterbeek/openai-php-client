@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OpenAI\Actions\Responses;
 
+use OpenAI\Contracts\Extensions\ExtensionOutputItemContract;
 use OpenAI\Responses\Responses\Output\OutputApplyPatchToolCall;
 use OpenAI\Responses\Responses\Output\OutputCodeInterpreterToolCall;
 use OpenAI\Responses\Responses\Output\OutputCompaction;
@@ -50,7 +51,7 @@ use OpenAI\Responses\Responses\Output\OutputWebSearchToolCall;
  * @phpstan-import-type OutputToolSearchOutputType from OutputToolSearchOutput
  *
  * @phpstan-type ResponseOutputObjectTypes array<int, OutputApplyPatchToolCallType|OutputShellCallType|OutputShellCallOutputType|OutputComputerToolCallType|OutputFileSearchToolCallType|OutputFunctionToolCallType|OutputMessageType|OutputProgramType|OutputProgramOutputType|OutputReasoningType|OutputWebSearchToolCallType|OutputMcpListToolsType|OutputMcpApprovalRequestType|OutputMcpCallType|OutputImageGenerationToolCallType|OutputCodeInterpreterToolCallType|OutputLocalShellCallType|OutputCustomToolCallType|OutputToolSearchCallType|OutputToolSearchOutputType|OutputCompactionType>
- * @phpstan-type ResponseOutputObjectReturnType array<int, OutputApplyPatchToolCall|OutputShellCall|OutputShellCallOutput|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction>
+ * @phpstan-type ResponseOutputObjectReturnType array<int, OutputApplyPatchToolCall|OutputShellCall|OutputShellCallOutput|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction|ExtensionOutputItemContract>
  */
 final class OutputObjects
 {
@@ -61,7 +62,7 @@ final class OutputObjects
     public static function parse(array $outputItems): array
     {
         return array_map(
-            fn (array $item): OutputApplyPatchToolCall|OutputShellCall|OutputShellCallOutput|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction => match ($item['type']) {
+            fn (array $item): OutputApplyPatchToolCall|OutputShellCall|OutputShellCallOutput|OutputMessage|OutputComputerToolCall|OutputFileSearchToolCall|OutputWebSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCodeInterpreterToolCall|OutputLocalShellCall|OutputCustomToolCall|OutputToolSearchCall|OutputToolSearchOutput|OutputCompaction|ExtensionOutputItemContract => match ($item['type']) {
                 'shell_call' => OutputShellCall::from($item),
                 'shell_call_output' => OutputShellCallOutput::from($item),
                 'message' => OutputMessage::from($item),
@@ -83,7 +84,7 @@ final class OutputObjects
                 'tool_search_output' => OutputToolSearchOutput::from($item),
                 'compaction' => OutputCompaction::from($item),
                 'apply_patch_call' => OutputApplyPatchToolCall::from($item),
-                default => throw new \UnexpectedValueException('Uh oh! We do not recognize this type. Please submit a bug to openai-php/client on GitHub!'),
+                default => ExtensionItems::resolve($item),
             },
             $outputItems,
         );

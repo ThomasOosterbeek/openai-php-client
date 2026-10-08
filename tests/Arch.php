@@ -37,6 +37,7 @@ test('responses')->expect('OpenAI\Responses')->toOnlyUse([
     'OpenAI\Exceptions\UnknownEventException',
     'OpenAI\Contracts',
     'OpenAI\Testing\Responses\Concerns',
+    'OpenAI\ValueObjects\ResponsesExtensionRegistry',
     'Psr\Http\Message\ResponseInterface',
     'Psr\Http\Message\StreamInterface',
 ]);
@@ -48,12 +49,14 @@ test('value objects')->expect('OpenAI\ValueObjects')->toOnlyUse([
     'Psr\Http\Message\StreamInterface',
     'OpenAI\Enums',
     'OpenAI\Contracts',
+    'OpenAI\Exceptions\InvalidResponsesExtension',
     'OpenAI\Responses\Meta\MetaInformation',
 ]);
 
 test('client')->expect('OpenAI\Client')->toOnlyUse([
     'OpenAI\Resources',
     'OpenAI\Contracts',
+    'OpenAI\ValueObjects\ResponsesExtensionRegistry',
 ]);
 
 test('openai')->expect('OpenAI')->toOnlyUse([

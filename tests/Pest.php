@@ -3,6 +3,7 @@
 use OpenAI\Client;
 use OpenAI\Contracts\TransporterContract;
 use OpenAI\ValueObjects\ApiKey;
+use OpenAI\ValueObjects\ResponsesExtensionRegistry;
 use OpenAI\ValueObjects\Transporter\AdaptableResponse;
 use OpenAI\ValueObjects\Transporter\BaseUri;
 use OpenAI\ValueObjects\Transporter\Headers;
@@ -11,7 +12,7 @@ use OpenAI\ValueObjects\Transporter\QueryParams;
 use OpenAI\ValueObjects\Transporter\Response;
 use Psr\Http\Message\ResponseInterface;
 
-function mockClient(string $method, string $resource, array $params, Response|AdaptableResponse|ResponseInterface|string $response, $methodName = 'requestObject', bool $validateParams = true)
+function mockClient(string $method, string $resource, array $params, Response|AdaptableResponse|ResponseInterface|string $response, $methodName = 'requestObject', bool $validateParams = true, ?ResponsesExtensionRegistry $extensions = null)
 {
     $transporter = Mockery::mock(TransporterContract::class);
 
@@ -46,7 +47,7 @@ function mockClient(string $method, string $resource, array $params, Response|Ad
                 && $request->getUri()->getPath() === "/v1/$resource";
         })->andReturn($response);
 
-    return new Client($transporter);
+    return new Client($transporter, $extensions);
 }
 
 function mockContentClient(string $method, string $resource, array $params, string $response, bool $validateParams = true)
@@ -54,7 +55,7 @@ function mockContentClient(string $method, string $resource, array $params, stri
     return mockClient($method, $resource, $params, $response, 'requestContent', $validateParams);
 }
 
-function mockStreamClient(string $method, string $resource, array $params, ResponseInterface $response, bool $validateParams = true)
+function mockStreamClient(string $method, string $resource, array $params, ResponseInterface $response, bool $validateParams = true, ?ResponsesExtensionRegistry $extensions = null)
 {
-    return mockClient($method, $resource, $params, $response, 'requestStream', $validateParams);
+    return mockClient($method, $resource, $params, $response, 'requestStream', $validateParams, $extensions);
 }

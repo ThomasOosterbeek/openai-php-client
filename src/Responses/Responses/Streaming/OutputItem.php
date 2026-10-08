@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace OpenAI\Responses\Responses\Streaming;
 
+use OpenAI\Actions\Responses\ExtensionItems;
+use OpenAI\Contracts\Extensions\ExtensionOutputItemContract;
 use OpenAI\Contracts\ResponseContract;
 use OpenAI\Contracts\ResponseHasMetaInformationContract;
 use OpenAI\Responses\Concerns\ArrayAccessible;
@@ -69,7 +71,7 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
         public readonly string $type,
         public readonly int $outputIndex,
         public readonly int $sequenceNumber,
-        public readonly OutputApplyPatchToolCall|OutputShellCall|OutputShellCallOutput|OutputMessage|OutputCodeInterpreterToolCall|OutputFileSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputWebSearchToolCall|OutputComputerToolCall|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCompaction|OutputToolSearchCall|OutputToolSearchOutput $item,
+        public readonly OutputApplyPatchToolCall|OutputShellCall|OutputShellCallOutput|OutputMessage|OutputCodeInterpreterToolCall|OutputFileSearchToolCall|OutputFunctionToolCall|OutputProgram|OutputProgramOutput|OutputWebSearchToolCall|OutputComputerToolCall|OutputReasoning|OutputMcpListTools|OutputMcpApprovalRequest|OutputMcpCall|OutputImageGenerationToolCall|OutputCompaction|OutputToolSearchCall|OutputToolSearchOutput|ExtensionOutputItemContract $item,
         private readonly MetaInformation $meta,
     ) {}
 
@@ -78,10 +80,7 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
      */
     public static function from(array $attributes, MetaInformation $meta): self
     {
-        /** @var 'message'|'file_search_call'|'function_call'|'program'|'program_output'|'web_search_call'|'computer_call'|'reasoning'|'image_generation_call'|'mcp_list_tools'|'mcp_approval_request'|'mcp_call'|'code_interpreter_call'|'compaction'|'tool_search_call'|'tool_search_output'|'apply_patch_call'|'shell_call'|'shell_call_output' $itemType */
-        $itemType = $attributes['item']['type'];
-
-        $item = match ($itemType) {
+        $item = match ($attributes['item']['type']) {
             'shell_call' => OutputShellCall::from($attributes['item']),
             'shell_call_output' => OutputShellCallOutput::from($attributes['item']),
             'message' => OutputMessage::from($attributes['item']),
@@ -101,6 +100,7 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
             'tool_search_call' => OutputToolSearchCall::from($attributes['item']),
             'tool_search_output' => OutputToolSearchOutput::from($attributes['item']),
             'apply_patch_call' => OutputApplyPatchToolCall::from($attributes['item']),
+            default => ExtensionItems::resolve($attributes['item']),
         };
 
         return new self(
@@ -117,6 +117,8 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
      */
     public function toArray(): array
     {
+        // https://github.com/phpstan/phpstan/issues/8438
+        // @phpstan-ignore-next-line
         return [
             'type' => $this->type,
             'output_index' => $this->outputIndex,
