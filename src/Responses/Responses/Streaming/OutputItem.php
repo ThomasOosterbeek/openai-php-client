@@ -80,10 +80,7 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
      */
     public static function from(array $attributes, MetaInformation $meta): self
     {
-        /** @var 'message'|'file_search_call'|'function_call'|'program'|'program_output'|'web_search_call'|'computer_call'|'reasoning'|'image_generation_call'|'mcp_list_tools'|'mcp_approval_request'|'mcp_call'|'code_interpreter_call'|'compaction'|'tool_search_call'|'tool_search_output'|'apply_patch_call'|'shell_call'|'shell_call_output' $itemType */
-        $itemType = $attributes['item']['type'];
-
-        $item = match ($itemType) {
+        $item = match ($attributes['item']['type']) {
             'shell_call' => OutputShellCall::from($attributes['item']),
             'shell_call_output' => OutputShellCallOutput::from($attributes['item']),
             'message' => OutputMessage::from($attributes['item']),
@@ -103,7 +100,6 @@ final class OutputItem implements ResponseContract, ResponseHasMetaInformationCo
             'tool_search_call' => OutputToolSearchCall::from($attributes['item']),
             'tool_search_output' => OutputToolSearchOutput::from($attributes['item']),
             'apply_patch_call' => OutputApplyPatchToolCall::from($attributes['item']),
-            // @phpstan-ignore match.unreachable
             default => ExtensionItems::resolve($attributes['item']),
         };
 

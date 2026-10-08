@@ -444,7 +444,7 @@ test('creates responses with hosted skills and an existing remote MCP tool', fun
 
 test('create hydrates vendor extension items', function () {
     $resource = createResponseResource();
-    $resource['output'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+    $resource['output'][] = acmeSearchResultItem();
 
     $client = mockClient('POST', 'responses', [
         'model' => 'gpt-4o',
@@ -465,7 +465,7 @@ test('create hydrates vendor extension items', function () {
 
 test('create throws on vendor extension items when none are registered', function () {
     $resource = createResponseResource();
-    $resource['output'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+    $resource['output'][] = acmeSearchResultItem();
 
     $client = mockClient('POST', 'responses', [
         'model' => 'gpt-4o',
@@ -480,7 +480,7 @@ test('create throws on vendor extension items when none are registered', functio
 
 test('retrieve hydrates vendor extension items', function () {
     $resource = retrieveResponseResource();
-    $resource['output'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+    $resource['output'][] = acmeSearchResultItem();
 
     $client = mockClient('GET', 'responses/resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c', [], OpenAI\ValueObjects\Transporter\Response::from($resource, metaHeaders()), extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));
 
@@ -493,7 +493,7 @@ test('retrieve hydrates vendor extension items', function () {
 
 test('list hydrates vendor extension input items', function () {
     $resource = listInputItemsResource();
-    $resource['data'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+    $resource['data'][] = acmeSearchResultItem();
 
     $client = mockClient('GET', 'responses/resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c/input_items', [], OpenAI\ValueObjects\Transporter\Response::from($resource, metaHeaders()), extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));
 
@@ -553,7 +553,7 @@ test('create streamed throws on vendor events when none are registered', functio
 
 test('cancel hydrates vendor extension items', function () {
     $resource = retrieveResponseResource();
-    $resource['output'][] = ['type' => 'acme:search_result', 'query' => 'openresponses', 'score' => 0.98];
+    $resource['output'][] = acmeSearchResultItem();
 
     $client = mockClient('POST', 'responses/resp_67ccf18ef5fc8190b16dbee19bc54e5f087bb177ab789d5c/cancel', [
     ], OpenAI\ValueObjects\Transporter\Response::from($resource, metaHeaders()), extensions: ResponsesExtensionRegistry::from([AcmeExtension::class]));

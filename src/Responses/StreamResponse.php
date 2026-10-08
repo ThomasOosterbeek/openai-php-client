@@ -32,7 +32,7 @@ final class StreamResponse implements ResponseHasMetaInformationContract, Respon
     public function __construct(
         private readonly string $responseClass,
         private readonly ResponseInterface $response,
-        private readonly ?ResponsesExtensionRegistry $registry = null,
+        private readonly ?ResponsesExtensionRegistry $extensions = null,
     ) {
         //
     }
@@ -97,7 +97,7 @@ final class StreamResponse implements ResponseHasMetaInformationContract, Respon
 
             $attributes['__meta'] = $this->meta();
 
-            $streamEvent = ResponsesExtensionRegistry::scoped($this->registry, fn () => $this->responseClass::from($attributes));
+            $streamEvent = ResponsesExtensionRegistry::scoped($this->extensions, fn () => $this->responseClass::from($attributes));
 
             $event = null;
 

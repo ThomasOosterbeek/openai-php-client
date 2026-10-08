@@ -19,15 +19,6 @@ function withAcme(Closure $callback): mixed
     return ResponsesExtensionRegistry::scoped(ResponsesExtensionRegistry::from([AcmeExtension::class]), $callback);
 }
 
-function acmeSearchResultItem(): array
-{
-    return [
-        'type' => 'acme:search_result',
-        'query' => 'openresponses',
-        'score' => 0.98,
-    ];
-}
-
 test('OutputObjects routes registered vendor items to the extension class', function () {
     $output = withAcme(fn () => OutputObjects::parse([acmeSearchResultItem()]));
 

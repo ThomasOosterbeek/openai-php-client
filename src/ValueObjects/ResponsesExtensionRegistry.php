@@ -49,21 +49,8 @@ final class ResponsesExtensionRegistry
                 );
             }
 
-            foreach ($extension::outputItems() as $type => $class) {
-                self::guardType($extension, $namespace, $type);
-                self::guardClass($class, $type, ExtensionOutputItemContract::class);
-                self::guardUnique($outputItems, $type);
-
-                $outputItems[$type] = $class;
-            }
-
-            foreach ($extension::streamEvents() as $type => $class) {
-                self::guardType($extension, $namespace, $type);
-                self::guardClass($class, $type, ExtensionStreamEventContract::class);
-                self::guardUnique($streamEvents, $type);
-
-                $streamEvents[$type] = $class;
-            }
+            self::register($outputItems, $extension, $namespace, $extension::outputItems(), ExtensionOutputItemContract::class);
+            self::register($streamEvents, $extension, $namespace, $extension::streamEvents(), ExtensionStreamEventContract::class);
         }
 
         return new self($outputItems, $streamEvents);
@@ -108,6 +95,25 @@ final class ResponsesExtensionRegistry
     public function streamEvent(string $type): ?string
     {
         return $this->streamEvents[$type] ?? null;
+    }
+
+    /**
+     * @template TContract of object
+     *
+     * @param  array<string, class-string<TContract>>  $registered
+     * @param  class-string<ResponsesExtensionContract>  $extension
+     * @param  array<string, class-string<TContract>>  $types
+     * @param  class-string<TContract>  $contract
+     */
+    private static function register(array &$registered, string $extension, string $namespace, array $types, string $contract): void
+    {
+        foreach ($types as $type => $class) {
+            self::guardType($extension, $namespace, $type);
+            self::guardClass($class, $type, $contract);
+            self::guardUnique($registered, $type);
+
+            $registered[$type] = $class;
+        }
     }
 
     /**

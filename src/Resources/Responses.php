@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace OpenAI\Resources;
 
+use Closure;
 use OpenAI\Contracts\Resources\ResponsesContract;
 use OpenAI\Contracts\TransporterContract;
 use OpenAI\Responses\Responses\CreateResponse;
@@ -50,7 +51,7 @@ final class Responses implements ResponsesContract
         /** @var Response<CreateResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return ResponsesExtensionRegistry::scoped($this->extensions, fn (): CreateResponse => CreateResponse::from($response->data(), $response->meta()));
+        return $this->hydrate(fn (): CreateResponse => CreateResponse::from($response->data(), $response->meta()));
     }
 
     /**
@@ -85,7 +86,7 @@ final class Responses implements ResponsesContract
         /** @var Response<RetrieveResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return ResponsesExtensionRegistry::scoped($this->extensions, fn (): RetrieveResponse => RetrieveResponse::from($response->data(), $response->meta()));
+        return $this->hydrate(fn (): RetrieveResponse => RetrieveResponse::from($response->data(), $response->meta()));
     }
 
     /**
@@ -120,7 +121,7 @@ final class Responses implements ResponsesContract
         /** @var Response<RetrieveResponseType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return ResponsesExtensionRegistry::scoped($this->extensions, fn (): RetrieveResponse => RetrieveResponse::from($response->data(), $response->meta()));
+        return $this->hydrate(fn (): RetrieveResponse => RetrieveResponse::from($response->data(), $response->meta()));
     }
 
     /**
@@ -152,7 +153,7 @@ final class Responses implements ResponsesContract
         /** @var Response<ListInputItemsType> $response */
         $response = $this->transporter->requestObject($payload);
 
-        return ResponsesExtensionRegistry::scoped($this->extensions, fn (): ListInputItems => ListInputItems::from($response->data(), $response->meta()));
+        return $this->hydrate(fn (): ListInputItems => ListInputItems::from($response->data(), $response->meta()));
     }
 
     /**
@@ -161,5 +162,18 @@ final class Responses implements ResponsesContract
     public function conversations(): Conversations
     {
         return new Conversations($this->transporter);
+    }
+
+    /**
+     * Hydrates a response with this client's extensions in scope.
+     *
+     * @template TResponse
+     *
+     * @param  Closure(): TResponse  $callback
+     * @return TResponse
+     */
+    private function hydrate(Closure $callback): mixed
+    {
+        return ResponsesExtensionRegistry::scoped($this->extensions, $callback);
     }
 }

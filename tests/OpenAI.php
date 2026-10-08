@@ -98,45 +98,7 @@ it('sets a custom stream handler via factory', function () {
 
 test('factory registers responses extensions', function () {
     $attributes = createResponseResource();
-    $attributes['output'][] = [
-        'type' => 'acme:search_result',
-        'query' => 'openresponses',
-        'score' => 0.98,
-    ];
-
-    $httpClient = Mockery::mock(ClientInterface::class);
-    $httpClient
-        ->shouldReceive('sendRequest')
-        ->once()
-        ->andReturn(new Psr7Response(200, ['Content-Type' => 'application/json', ...metaHeaders()], json_encode($attributes)));
-
-    $client = OpenAI::factory()
-        ->withApiKey('foo')
-        ->withHttpClient($httpClient)
-        ->withResponsesExtension(AcmeExtension::class)
-        ->make();
-
-    expect($client)->toBeInstanceOf(Client::class);
-
-    $result = $client->responses()->create([
-        'model' => 'gpt-4o',
-        'input' => 'what was a positive news story from today?',
-    ]);
-
-    $output = $result->output;
-
-    expect($output[count($output) - 1])->toBeInstanceOf(AcmeSearchResult::class)
-        ->query->toBe('openresponses')
-        ->score->toBe(0.98);
-});
-
-test('factory threads multiple responses extensions to the client', function () {
-    $attributes = createResponseResource();
-    $attributes['output'][] = [
-        'type' => 'acme:search_result',
-        'query' => 'openresponses',
-        'score' => 0.98,
-    ];
+    $attributes['output'][] = acmeSearchResultItem();
     $attributes['output'][] = [
         'type' => 'other:widget',
         'label' => 'gadget',
@@ -155,6 +117,8 @@ test('factory threads multiple responses extensions to the client', function () 
         ->withResponsesExtension(OtherExtension::class)
         ->make();
 
+    expect($client)->toBeInstanceOf(Client::class);
+
     $result = $client->responses()->create([
         'model' => 'gpt-4o',
         'input' => 'what was a positive news story from today?',
@@ -164,6 +128,7 @@ test('factory threads multiple responses extensions to the client', function () 
     $count = count($output);
 
     expect($output[$count - 2])->toBeInstanceOf(AcmeSearchResult::class)
+        ->and($output[$count - 2]->score)->toBe(0.98)
         ->and($output[$count - 1])->toBeInstanceOf(OtherWidget::class)
         ->and($output[$count - 1]->label)->toBe('gadget');
 });
